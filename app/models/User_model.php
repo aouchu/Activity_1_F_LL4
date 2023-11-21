@@ -4,31 +4,24 @@ defined('PREVENT_DIRECT_ACCESS') OR exit('No direct script access allowed');
 class User_model extends Model {
 	
     public function CheckDupEmail($email) {
-        $mail = $email;
-        $data = $this->db->table('user')->where('email',$mail)->get();
-        return $data;
+        return $this->db->table('user')->where('email',$email)->get();
     }
 
     public function CheckDupUsername($username) {
-        $name = $username;
-        $data = $this->db->table('user')->where('username',$name)->get();
-        return $data;
+        return $this->db->table('user')->where('username',$username)->get();
     }
 
     public function GetUser($id){
-        $ID = $id;
-        $data = $this->db->table('user')->where('id',$ID)->get();
-		return $data;
+        return $this->db->table('user')->where('id',$id)->get();
     }
 
     public function LoginUser($username){
-        $name = $username;
-        $data = $this->db->table('user')->where('username',$name)->get();
-		return $data;
+        return $this->db->table('user')->where('username',$username)->get();
     }
 
-    public function RegUser($username, $email, $password){
+    public function RegUser($name, $username, $email, $password){
         $bind = [
+            'name' => $name,
             'username' => $username,
             'email' => $email,
             'password' => $password,

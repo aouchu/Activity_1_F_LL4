@@ -41,6 +41,12 @@
         padding:.5dvh;
         border-radius:3dvh;
     }
+    .banner {
+        background-color: rgb(135,96,115);
+        color:white;
+        margin-bottom:1dvh;
+        padding:.5dvh;
+    }
     #user {
         float: right;
     }
@@ -61,11 +67,11 @@
         display:flex;
     }
     .label {
-        width:40%;
-        font-size:3dvh;
+        width:50%;
+        font-size:1.5rem;
     }
     .sublabel {
-        font-size:2.5dvh !important;
+        font-size:1rem !important;
     } 
     .form {
         background-color:rgb(225, 206, 213);
@@ -91,9 +97,12 @@
     a:visited {
         color:white;
     }
-    h1, h3, h4 {
+    h1, h3.lbl, h4 {
         margin:.5dvh;
         margin-left:1.5dvh !important;
+    }
+    h3, h2, pre {
+        margin:.5rem;
     }
     label.active {
         border-bottom: 2px solid rgb(167,116,129);
@@ -102,9 +111,9 @@
     #simplecontent, .designcontent {
         margin-left: 10%;
     }
-    #contentpreview, #content2preview, #content3preview {
-        margin-left: 10%;
+    #contentpreview, #content2preview, #content3preview, #headerpreview, #subheaderpreview, #subheader2preview {
         white-space: normal;
+        word-break: break-word;
     }
     #mailmessage, #mailsubject, #mailrecipient, #message {
         word-break: break-word;
@@ -321,9 +330,6 @@
 
 </style>
 <body>
-    <?php 
-    
-    ?>
     <div class='box fadeInDown'>
         <div class='header'>
             <h1><a href='<?= site_url();?>/mail'>Mailing</a><span id='user'><?php if(isset($_SESSION['username'])): ?>Welcome, <?= $_SESSION['username']; ?>! &nbsp    <a href='/signout' id='logout'>Sign out</a><span><?php endif; ?></h1>
@@ -332,7 +338,7 @@
         <div class='content'>
             <div class='sub form'>
                 <div class='header'>
-                    <h3>Send an Email</h3>
+                    <h3 class='lbl'>Send an Email</h3>
                 </div>
                 <!-- flash message -->
                     <?php if(isset($_SESSION['msg'])):?>
@@ -344,9 +350,9 @@
                     <?php endif;?>
                 <!-- end -->
                 <center>
-                <button class='button active' id='simple'>Simple Email</button> <button class='button' id='design'>Email with Design</button>
+                <button class='button active' id='simple'>Basic Email</button> <button class='button' id='design'>Simple Email Template</button>
                 </center>
-                <form action='/send' method='post' enctype='multipart/form-data'>
+                <form action='/send' method='post' enctype="multipart/form-data">
                     <div class='group'>
                         <div  class='label'>
                             <label for='recipient' id='l_recipient'>Recipient:</label>
@@ -373,7 +379,7 @@
                             <div  class='label sublabel'>
                                 <label for='message' id='l_message'>Message:</label>
                             </div>
-                            <textarea rows="8" name='message' id='message' placeholder='message'></textarea>
+                            <textarea rows="8" name='message' id='message' value=' ' placeholder='message'></textarea>
                     </div>
 `                   <!-- end -->
 
@@ -409,7 +415,7 @@
                                     <div  class='label sublabel'>
                                         <label for='image' id='l_image'>Image:</label>
                                     </div>
-                                    <input type="file" id="image" />
+                                    <input type="file" id="image" name="image"/>
                                     <label for="image" class="btn-2">upload</label>
                             </div>
                         <!-- end -->
@@ -430,7 +436,7 @@
                                     <div  class='label sublabel'>
                                         <label for='image2' id='l_image2'>Image:</label>
                                     </div>
-                                    <input type="file" id="image2" />
+                                    <input type="file" id="image2" name="image2" />
                                     <label for="image2" class="btn-2">upload</label>
                             </div>
                         <!-- end -->
@@ -446,9 +452,9 @@
                     <hr>
                     <div class='group'>
                                     <div  class='label'>
-                                        <label for='attachment' id='l_attachment'>Attachment (Optional):</label>
+                                        <label for='attachment' id='l_attachment'>Image (Optional):</label>
                                     </div>
-                                    <input type="file" id="attachment" />
+                                    <input type="file" id="attachment" name="attachment"/>
                                     <label for="attachment" class="btn-2">upload</label>
                     </div>
 
@@ -458,41 +464,47 @@
                 </form>
             </div>
             <div class='sub preview'>
-                <center><h3>Preview</h3></center>
+                <center><h3 class='lbl'>Preview</h3></center>
                 <div id='simplepreview'>
-                    <h3>Sender: <?= $_SESSION['email']; ?> </h3>
+                    <h3 class='lbl'>Sender: <?= $_SESSION['email']; ?> </h3>
                     <hr>
-                    <h3>Recipient: <span id='mailrecipient'></span></h3>
+                    <h3 class='lbl'>Recipient: <span id='mailrecipient'></span></h3>
                     <hr>
-                    <h3>Subject: <span id='mailsubject'></span></h3>
+                    <h3 class='lbl'>Subject: <span id='mailsubject'></span></h3>
                     <hr>
-                    <h3>Message: <br><span id='mailmessage'></span></h3>
+                    <h3 class='lbl'>Message: <br><span id='mailmessage'></span></h3>
                     <hr>
-                    <h3>Attachment: <span id='mailattachment'></span></h3>
+                    <h3 class='lbl'>Attachment: <span id='mailattachment'></span></h3>
                 </div>
 
                 <div class='hidden designcontent prev'>
-                    <h3 >Sender: <?= $_SESSION['email']; ?> </h3>
+                    <h3 class='lbl'>Sender: <?= $_SESSION['email']; ?> </h3>
                     <hr>
-                    <h3>Recipient: <span id='mailrecipient2'></span></h3>
+                    <h3 class='lbl'>Recipient: <span id='mailrecipient2'></span></h3>
                     <hr>
-                    <h3>Subject: <span id='mailsubject2'></span></h3>
+                    <h3 class='lbl'>Subject: <span id='mailsubject2'></span></h3>
                     <hr>
-                    <?php $emailwithhtmlcontent = "
                     <div id='designgrouper'>
-                    <h3 id='headerpreview'>Sample header</h3>
+                    <center>
+                    <div class='banner'>    
+                    <h2>&#9668; &#9669; &#9668; &#10012; <span id='headerpreview'>Sample header</span> &#10012; &#9658; &#9659; &#9658;</h2>
+                    </div>
                     <pre id='contentpreview'>Sample message under header. </pre>
-                    <h4 id='subheaderpreview'>Sample subheader</h4>
+                    <div class='banner'>
+                    <h3 id='subheaderpreview'>Sample subheader</h3>
+                    </div>
                     <pre id='content2preview'>Sample message under subheader. </pre>
                     <img id='imagepreview' src='public/sample.jpg' height='20%' width='100%'>
-                    <h4 id='subheader2preview'>Sample subheader</h4>
+                    <div class='banner'>
+                    <h3 id='subheader2preview'>Sample subheader</h3>
+                    </div>
                     <pre id='content3preview'>Sample message under subheader. </pre>
                     <img id='imagepreview2' src='public/sample2.jpg' height='20%' width='100%'>
                     <footer><pre id='footerpreview'></pre></footer>
+                    </center>
                     </div>
-                    "; echo $emailwithhtmlcontent;?>
                     <hr>
-                    <h3>Attachment: <span id='mailattachment2'> </span></h3>
+                    <h3 class='lbl'>Attachment: <span id='mailattachment2'> </span></h3>
                 </div>
             </div>
         </div>

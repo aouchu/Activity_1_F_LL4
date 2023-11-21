@@ -20,36 +20,56 @@ class Mailing extends Controller {
     }
 
     public function signin() {
-        $username = $_POST['username_log'];
-        $password = $_POST['password_log'];
-        $result = $this->users->LoginUser($username);
 
-        if($result) {
-            $hashedpass = $result['password'];
-            if(password_verify($password,$hashedpass))
-            {
-                $userdata = array(
-                    'id' => $result['id'],
-                    'username'  => $result['username'],
-                    'email'     => $result['email'],
-                    'logged_in' => TRUE
-                );
-                $this->session->set_userdata($userdata);
-                redirect(site_url().'/mail');
-            }
-            else {
-                $this->session->set_flashdata('msg','wrong password.');
+        $this->form_validation
+		->name('username_log')
+			->required()
+		->name('password_log')
+			->required();
+            
+        if ($this->form_validation->run() == FALSE)
+        {
+            $data = [
+                'errors' => $this->form_validation->errors(),
+            ];
+            $this->call->view('access', $data);
+        }
+        else {
+
+            $username = $_POST['username_log'];
+            $password = $_POST['password_log'];
+            $result = $this->users->LoginUser($username);
+
+            if($result) {
+                $hashedpass = $result['password'];
+                if(password_verify($password,$hashedpass))
+                {
+                    $userdata = array(
+                        'id' => $result['id'],
+                        'name' => $result['name'],
+                        'username'  => $result['username'],
+                        'email'     => $result['email'],
+                        'logged_in' => TRUE
+                    );
+                    $this->session->set_userdata($userdata);
+                    redirect(site_url().'/mail');
+                }
+                else {
+                    $this->session->set_flashdata('msg','wrong password.');
+                    redirect(site_url().'/');
+                }
+            } else {
+                $this->session->set_flashdata('msg','No users exist with that username.');
                 redirect(site_url().'/');
             }
-        } else {
-            $this->session->set_flashdata('msg','No users exist with that username.');
-            redirect(site_url().'/');
         }
     }
 
     public function signup() {
 
         $this->form_validation
+        ->name('name')
+            ->required()
 		->name('username')
 			->required()
 			->min_length(6)
@@ -71,8 +91,8 @@ class Mailing extends Controller {
             ];
             $this->call->view('access', $data);
         }
-        else
-        {
+        else {
+            $name = $_POST['name'];   
             $username = $_POST['username'];
             $email = $_POST['email'];
             $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
@@ -86,7 +106,7 @@ class Mailing extends Controller {
                 $this->session->set_flashdata('msg','A user exists with that username. Please change your username.');
                 redirect(site_url().'/');
             } else {
-                $result = $this->users->RegUser($username, $email, $password);
+                $result = $this->users->RegUser($name ,$username, $email, $password);
                 if ($result) {
                     $this->session->set_flashdata('msg','You have registered sucessfully.');
                     redirect(site_url().'/');
@@ -99,6 +119,9 @@ class Mailing extends Controller {
     }
 
     public function send() {
+        ini_set('SMTP','mailpit');
+        ini_set('smtp_port',1025);
+
         $this->form_validation
 		->name('recipient')
 			->required()
@@ -106,13 +129,171 @@ class Mailing extends Controller {
         ->name('subject')
 			->required()
             ->min_length(10);
-
         if ($this->form_validation->run() == FALSE)
         {
-            
+            $this->session->set_flashdata('msg',$this->form_validation->errors());
+            redirect(site_url().'/mail');
         }
         else {
+            // $this->session->userdata('name');
+            if(!$_FILES['image']['name'] && !$_FILES['image2']['name'] && !$_FILES['attachment']['name']) {
 
+                $this->email->sender($this->session->userdata('email'), $this->session->userdata('name'));
+                $this->email->recipient($_POST['recipient']);
+
+                $this->email->subject($_POST['subject']);
+                $this->email->email_content($_POST['message']);
+
+                $test = $this->email->send();
+
+                if($test) {
+                    $this->session->set_flashdata('msg', 'email was sent successfully.');
+                    redirect(site_url().'/mail');
+                } else {
+                    $this->session->set_flashdata('msg', 'something went wrong.');
+                    redirect(site_url().'/mail');
+                }
+
+            } else if((!$_FILES['image']['name'] || !$_FILES['image2']['name']) && $_FILES['attachment']['name']) {
+
+                $this->call->library('upload', $_FILES['attachment']);
+                $this->upload
+                    ->set_dir('public')
+                    ->is_image();
+                if($this->upload->do_upload()) {
+
+                    $this->email->sender($this->session->userdata('email'), $this->session->userdata('name'));
+                    $this->email->recipient($_POST['recipient']);
+
+                    $this->email->subject($_POST['subject']);
+                    $this->email->email_content($_POST['message']);
+                    $this->email->attachment('public/'.$this->upload->get_filename());
+
+                    $test = $this->email->send();
+                    
+                    if($test) {
+                        $this->session->set_flashdata('msg', 'email was sent successfully.');
+                        redirect(site_url().'/mail');
+                    } else {
+                        $this->session->set_flashdata('msg', 'something went wrong.');
+                        redirect(site_url().'/mail');
+                    }
+
+                } else {
+                    $this->session->set_flashdata('msg', $this->upload->get_errors());
+                    redirect(site_url().'/mail');
+                }
+
+            } else if($_FILES['image']['name'] && $_FILES['image2']['name'] && !$_FILES['attachment']['name']) {
+
+                $this->call->library('upload', $_FILES['image']);
+                $this->upload
+                    ->set_dir('public')
+                    ->is_image();
+                $test1 = $this->upload->do_upload();
+                $img = $this->upload->get_filename();
+
+                $test2 = move_uploaded_file($_FILES['image2']['tmp_name'],"C:\laragon\www\Activity_1_F_LL4\public\\".$_FILES['image2']['name']);
+                $name = $_FILES['image2']['name'];
+                $img2 = 'public/'.$name;
+
+                if($test1 && $test2) {
+
+                    $this->email->sender($this->session->userdata('email'), $this->session->userdata('name'));
+                    $this->email->recipient($_POST['recipient']);
+
+                    $this->email->subject($_POST['subject']);
+                    $this->email->email_content('<center>
+                    <div style="background-color: rgb(135,96,115);color:white;margin-bottom:1dvh;padding:.5dvh;">
+                    <h2 style="font-family: Courier, monospace;;word-break: break-word;">&#9668; &#9669; &#9668; &#10012; '.$_POST['header'].' &#10012; &#9658; &#9659; &#9658;</h2>
+                    </div>
+                    <p style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['content'].'</p>
+                    <div style="background-color: rgb(135,96,115);color:white;margin-bottom:1dvh;padding:.5dvh;">
+                    <h3 style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['subheader'].'</h3>
+                    </div>
+                    <p style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['content2'].'</p></br>
+                    <img src="http://activity_1_f_ll4.test/public/'.$img.'" width="50%" height="50%">
+                    <div style="background-color: rgb(135,96,115);color:white;margin-bottom:1dvh;padding:.5dvh;">
+                    <h3 style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['subheader2'].'</h3>
+                    </div>
+                    <p style="font-family: Courier, monospace;word-break: break-word;">'.$_POST['content3'].'</p></br>
+                    <img src="http://activity_1_f_ll4.test/'.$img2.'" width="50%" height="50%">
+                    <h6 style="font-family: Courier, monospace;width: 100%;background-color:rgb(135,96,115);color: white;text-align: center;padding:1rem;word-break: break-word;">'.$_POST['footer'].'</h6>
+                    </center>', 'html');
+
+                    $test = $this->email->send();
+                    
+                    if($test) {
+                        $this->session->set_flashdata('msg', 'email was sent successfully.');
+                        redirect(site_url().'/mail');
+                    } else {
+                        $this->session->set_flashdata('msg', 'something went wrong.');
+                        redirect(site_url().'/mail');
+                    }
+
+                } else {
+                    $this->session->set_flashdata('msg', $this->upload->get_errors());
+                    redirect(site_url().'/mail');
+                }
+            } else if($_FILES['image']['name'] && $_FILES['image2']['name'] && $_FILES['attachment']['name']) {
+                $this->call->library('upload', $_FILES['image']);
+                $this->upload
+                    ->set_dir('public')
+                    ->is_image();
+                $test1 = $this->upload->do_upload();
+                $img = $this->upload->get_filename();
+
+                $test2 = move_uploaded_file($_FILES['image2']['tmp_name'],"C:\laragon\www\Activity_1_F_LL4\public\\".$_FILES['image2']['name']);
+                $name = $_FILES['image2']['name'];
+                $img2 = 'public/'.$name;
+
+                $test3 = move_uploaded_file($_FILES['attachment']['tmp_name'],"C:\laragon\www\Activity_1_F_LL4\public\\".$_FILES['attachment']['name']);
+                $name2 = $_FILES['attachment']['name'];
+                $img3 = 'public/'.$name2;
+
+                if($test1 && $test2 && $test3) {
+
+                    $this->email->sender($this->session->userdata('email'), $this->session->userdata('name'));
+                    $this->email->recipient($_POST['recipient']);
+
+                    $this->email->subject($_POST['subject']);
+                    $this->email->email_content('<center>
+                    <div style="background-color: rgb(135,96,115);color:white;margin-bottom:1dvh;padding:.5dvh;">
+                    <h2 style="font-family: Courier, monospace;;word-break: break-word;">&#9668; &#9669; &#9668; &#10012; '.$_POST['header'].' &#10012; &#9658; &#9659; &#9658;</h2>
+                    </div>
+                    <p style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['content'].'</p>
+                    <div style="background-color: rgb(135,96,115);color:white;margin-bottom:1dvh;padding:.5dvh;">
+                    <h3 style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['subheader'].'</h3>
+                    </div>
+                    <p style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['content2'].'</p></br>
+                    <img src="http://activity_1_f_ll4.test/public/'.$img.'" width="50%" height="50%">
+                    <div style="background-color: rgb(135,96,115);color:white;margin-bottom:1dvh;padding:.5dvh;">
+                    <h3 style="font-family: Courier, monospace;;word-break: break-word;">'.$_POST['subheader2'].'</h3>
+                    </div>
+                    <p style="font-family: Courier, monospace;word-break: break-word;">'.$_POST['content3'].'</p></br>
+                    <img src="http://activity_1_f_ll4.test/'.$img2.'" width="50%" height="50%">
+                    <h6 style="font-family: Courier, monospace;width: 100%;background-color:rgb(135,96,115);color: white;text-align: center;padding:1rem;word-break: break-word;">'.$_POST['footer'].'</h6>
+                    </center>', 'html');
+
+                    $this->email->attachment('public/'.$name2);
+                    $test = $this->email->send();
+                    
+                    if($test) {
+                        $this->session->set_flashdata('msg', 'email was sent successfully.');
+                        redirect(site_url().'/mail');
+                    } else {
+                        $this->session->set_flashdata('msg', 'something went wrong.');
+                        redirect(site_url().'/mail');
+                    }
+
+                } else {
+                    $this->session->set_flashdata('msg', $this->upload->get_errors());
+                    redirect(site_url().'/mail');
+                }
+            } else {
+                $this->session->set_flashdata('msg', 'if you\'re using email with design, please make sure you uploaded or filled the images under the email content, you cannot leave the other one empty.');
+                redirect(site_url().'/mail');
+            }
         }
     }
 

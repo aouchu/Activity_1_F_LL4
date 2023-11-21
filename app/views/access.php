@@ -254,6 +254,11 @@
     -moz-animation-delay: 1.4s;
     animation-delay: 1.4s;
     }
+    .fadeIn.seven {
+    -webkit-animation-delay: 1.6s;
+    -moz-animation-delay: 1.6s;
+    animation-delay: 1.6s;
+    }
     /* Simple CSS3 Fade-in Animation */
     .underlineHover:after {
     display: block;
@@ -284,6 +289,10 @@
         display: none;
     }
 
+    .pointer {
+        cursor: pointer;
+    }
+
     #icon {
     width:35%;
     height:35%;
@@ -297,8 +306,8 @@
     <div class="wrapper fadeInDown">
         <div id="formContent">
             <!-- Tabs Titles -->
-            <h2 id='signin' class="active"> Sign In </h2>
-            <h2 id='signup' class="inactive underlineHover">Sign Up </h2>
+            <h2 id='signin' class="active pointer"> Sign In </h2>
+            <h2 id='signup' class="inactive underlineHover pointer">Sign Up </h2>
 
             <!-- Icon -->
             <div class="fadeIn first">
@@ -329,11 +338,12 @@
 
             <!-- Register Form -->
             <form action='/signup' method='post' id='signupform' class='hidden'>
-            <input type="text" id="username" class="fadeIn second" name="username" placeholder="username">
-            <input type="email" id="email" class="fadeIn third" name="email" placeholder="email">
-            <input type="password" id="password" class="fadeIn fourth" name="password" placeholder="password">
-            <input type="password" id="confirmpassword" class="fadeIn fifth" name="confirmpassword" placeholder="confirm password">
-            <input type="submit" class="fadeIn sixth" value="Sign up">
+            <input type="text" id="name" class="fadeIn second" name="name" placeholder="name">
+            <input type="text" id="username" class="fadeIn third" name="username" placeholder="username">
+            <input type="email" id="email" class="fadeIn fourth" name="email" placeholder="email">
+            <input type="password" id="password" class="fadeIn fifth" name="password" placeholder="password">
+            <input type="password" id="confirmpassword" class="fadeIn sixth" name="confirmpassword" placeholder="confirm password">
+            <input type="submit" class="fadeIn seven" value="Sign up">
             </form>
 
             </div>
