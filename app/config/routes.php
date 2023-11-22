@@ -49,3 +49,5 @@ $router->get('/', 'Mailing::index');
 $router->match('/signin', 'Mailing::signin', 'GET|POST');
 $router->get('/signout', 'Mailing::signout');
 $router->post('/signup', 'Mailing::signup');
+$router->match('/verify', 'Mailing::verify', 'GET|POST');
+$router->get('/sent', 'Mailing::index');

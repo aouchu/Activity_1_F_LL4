@@ -1,3 +1,8 @@
+<?php if(isset($_SESSION['logged_in'])) {
+    redirect(site_url()."/mail");
+} else {
+
+} ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,11 +101,11 @@
 
     /* FORM TYPOGRAPHY*/
 
-    input[type=button], input[type=submit], input[type=reset]  {
+    input[type=button], input[type=submit], input[type=reset]{
     background-color: rgb(167,116,129);
     border: none;
     color: white;
-    padding: 15px 80px;
+    padding: 15px 166px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
@@ -110,7 +115,7 @@
     box-shadow: 0 10px 30px 0 rgba(167,116,129, 0.4);
     -webkit-border-radius: 5px 5px 5px 5px;
     border-radius: 5px 5px 5px 5px;
-    margin: 5px 20px 40px 20px;
+    margin: 5px 5px 40px 5px;
     -webkit-transition: all 0.3s ease-in-out;
     -moz-transition: all 0.3s ease-in-out;
     -ms-transition: all 0.3s ease-in-out;
@@ -118,11 +123,35 @@
     transition: all 0.3s ease-in-out;
     }
 
-    input[type=button]:hover, input[type=submit]:hover, input[type=reset]:hover  {
+    input[type=submit].verify {
+        padding: 15px 80px !important;
+    }
+
+    button {
+        background-color: rgb(167,116,129);
+        border: none;
+        color: white;
+        padding: 15px 20px;
+        text-align: center;
+        text-decoration: none;
+        text-transform: uppercase;
+        font-size: 13px;
+        -webkit-box-shadow: 0 10px 30px 0 rgba(167,116,129, 0.4);
+        box-shadow: 0 10px 30px 0 rgba(167,116,129, 0.4);
+        -webkit-border-radius: 5px 5px 5px 5px;
+        border-radius: 5px 5px 5px 5px;
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        -ms-transition: all 0.3s ease-in-out;
+        -o-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+    }
+
+    input[type=button]:hover, input[type=submit]:hover, input[type=reset]:hover, button:hover  {
     background-color: rgb(135,96,115);
     }
 
-    input[type=button]:active, input[type=submit]:active, input[type=reset]:active  {
+    input[type=button]:active, input[type=submit]:active, input[type=reset]:active, button:active  {
     -moz-transform: scale(0.95);
     -webkit-transform: scale(0.95);
     -o-transform: scale(0.95);
@@ -306,8 +335,9 @@
     <div class="wrapper fadeInDown">
         <div id="formContent">
             <!-- Tabs Titles -->
-            <h2 id='signin' class="active pointer"> Sign In </h2>
-            <h2 id='signup' class="inactive underlineHover pointer">Sign Up </h2>
+            <h2 id='signin' class="pointer <?php if(strpos($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'], "sent")): ?><?= 'inactive underlineHover' ?><?php else:?><?= 'active';?><?php endif; ?>"> Sign In </h2>
+            <h2 id='signup' class="pointer <?php if(strpos($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'], "sent")): ?><?= 'inactive underlineHover' ?><?php else:?><?= 'inactive underlineHover';?><?php endif; ?>">Sign Up </h2>
+            <h2 id='verify' class="pointer <?php if(strpos($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'], "sent")): ?><?= 'active ' ?><?php else:?><?= 'inactive underlineHover';?><?php endif; ?>">Verify </h2>
 
             <!-- Icon -->
             <div class="fadeIn first">
@@ -330,20 +360,37 @@
             <?php endif; ?>
 
             <!-- Login Form -->
-            <form action='/signin' method='post' id='signinform'>
+            <form action='/signin' method='post' id='signinform' class='<?php if(strpos($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'], "sent")): ?><?= 'hidden' ?><?php else: endif; ?>'>
             <input type="text" id="username_log" class="fadeIn second" name="username_log" id='' placeholder="username">
             <input type="password" id="password_log" class="fadeIn third" name="password_log" placeholder="password">
             <input type="submit" class="fadeIn fourth" value="Sign in">
             </form>
 
             <!-- Register Form -->
-            <form action='/signup' method='post' id='signupform' class='hidden'>
+            <form action='/signup' method='post' id='signupform' class='<?php if(strpos($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'], "sent")): ?><?= 'hidden'; ?><?php else: echo 'hidden'; endif;?>'>
             <input type="text" id="name" class="fadeIn second" name="name" placeholder="name">
             <input type="text" id="username" class="fadeIn third" name="username" placeholder="username">
             <input type="email" id="email" class="fadeIn fourth" name="email" placeholder="email">
             <input type="password" id="password" class="fadeIn fifth" name="password" placeholder="password">
             <input type="password" id="confirmpassword" class="fadeIn sixth" name="confirmpassword" placeholder="confirm password">
             <input type="submit" class="fadeIn seven" value="Sign up">
+            </form>
+
+            <!-- Verify Form -->
+            <form action='/verify' method='post' id='verifyform' class='<?php if(strpos($_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'], "sent")): ?><?php else: ?><?= 'hidden' ?><?php endif; ?>'>
+            <?php if(isset($_SESSION['email']) && isset($_SESSION['status'])): ?>
+                <?php if($_SESSION['status'] == 'INACTIVE'): ?>
+                    <input type="email" class="fadeIn fourth" value="<?= $_SESSION['email'] ?>" readonly>
+                    <input type="text" id="code" class="fadeIn fifth" name="code" maxlength="6" placeholder="verification code">
+                    <button type="submit" class="fadeIn sixth" name="resend" value="Resend Code">Resend Code</button>
+                    <input type="submit" name="verify" class="fadeIn seven verify" value="submit">
+                <?php else:?>
+                    <input type="text" class="fadeIn fourth" value="You are already verified." readonly>
+                <?php endif;?>
+            <?php else: ?>
+                <input type="email" id="email" class="fadeIn fourth" name="email" placeholder="email">
+                <input type="submit" class="fadeIn fifth" value="verify" name="verifying">
+            <?php endif; ?>
             </form>
 
             </div>
@@ -353,8 +400,10 @@
 <script>
     const signin = document.getElementById("signin");
     const signup = document.getElementById("signup");
+    const verify = document.getElementById("verify");
     const signinform = document.getElementById("signinform");
     const signupform = document.getElementById("signupform");
+    const verifyform = document.getElementById("verifyform");
 
     const signinview = function () {
         signup.classList.remove("active");
@@ -363,8 +412,13 @@
         signin.classList.add("active");
         signin.classList.remove("inactive");
         signin.classList.remove("underlineHover");
+        verify.classList.remove("active");
+        verify.classList.add("inactive");
+        verify.classList.add("underlineHover");
+
         signinform.classList.remove("hidden");
         signupform.classList.add("hidden"); 
+        verifyform.classList.add("hidden");
     };
 
     const signupview = function () {
@@ -374,11 +428,33 @@
         signup.classList.add("active");
         signup.classList.remove("inactive");
         signup.classList.remove("underlineHover");
+        verify.classList.remove("active");
+        verify.classList.add("inactive");
+        verify.classList.add("underlineHover");
+
         signinform.classList.add("hidden");
         signupform.classList.remove("hidden");
+        verifyform.classList.add("hidden");
     };
+
+    const verifyview = function () {
+        signin.classList.remove("active");
+        signin.classList.add("inactive");
+        signin.classList.add("underlineHover");
+        verify.classList.add("active");
+        verify.classList.remove("inactive");
+        verify.classList.remove("underlineHover");
+        signup.classList.remove("active");
+        signup.classList.add("inactive");
+        signup.classList.add("underlineHover");
+
+        signinform.classList.add("hidden");
+        verifyform.classList.remove("hidden");
+        signupform.classList.add("hidden");
+    }
 
     signin.addEventListener("click", signinview);
     signup.addEventListener("click", signupview);
+    verify.addEventListener("click", verifyview);
 </script>
 </html>

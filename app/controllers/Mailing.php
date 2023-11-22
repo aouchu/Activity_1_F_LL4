@@ -41,22 +41,28 @@ class Mailing extends Controller {
             $result = $this->users->LoginUser($username);
 
             if($result) {
-                $hashedpass = $result['password'];
-                if(password_verify($password,$hashedpass))
-                {
-                    $userdata = array(
-                        'id' => $result['id'],
-                        'name' => $result['name'],
-                        'username'  => $result['username'],
-                        'email'     => $result['email'],
-                        'logged_in' => TRUE
-                    );
-                    $this->session->set_userdata($userdata);
-                    redirect(site_url().'/mail');
-                }
-                else {
-                    $this->session->set_flashdata('msg','wrong password.');
+                if($result['status'] == 'INACTIVE') {
+                    $this->session->set_flashdata('msg','Please verify your email before login.');
                     redirect(site_url().'/');
+                } else {
+                    $hashedpass = $result['password'];
+                    if(password_verify($password,$hashedpass))
+                    {
+                        $userdata = array(
+                            'id' => $result['id'],
+                            'name' => $result['name'],
+                            'username'  => $result['username'],
+                            'email'     => $result['email'],
+                            'logged_in' => TRUE
+                        );
+                        $this->session->set_userdata($userdata);
+                        redirect(site_url().'/mail');
+                    }
+                    else {
+                        $this->session->set_flashdata('msg','wrong password.');
+                        redirect(site_url().'/');
+                    }
+
                 }
             } else {
                 $this->session->set_flashdata('msg','No users exist with that username.');
@@ -106,14 +112,114 @@ class Mailing extends Controller {
                 $this->session->set_flashdata('msg','A user exists with that username. Please change your username.');
                 redirect(site_url().'/');
             } else {
-                $result = $this->users->RegUser($name ,$username, $email, $password);
+
+                $random = substr(str_shuffle(str_repeat("0123456789", 6)), 0, 6);
+                $code = sha1($random);
+                $result = $this->users->RegUser($name ,$username, $email, $password, $code);
                 if ($result) {
-                    $this->session->set_flashdata('msg','You have registered sucessfully.');
-                    redirect(site_url().'/');
+                    //sending code
+                    $this->email->sender('auto_mailing@gmail.com', 'Sample Mailer');
+                    $this->email->recipient($email);
+                    $this->email->subject('Verification Code');
+                    $this->email->email_content($random);
+                    $test = $this->email->send();
+
+                    $user = [
+                        'email' => $get['email'],
+                        'status' => $get['status'],
+                    ];
+                    $this->session->set_userdata($user);
+                    $this->session->set_flashdata('msg','A code has been sent to your email. Please verify your email to login.');
+                    redirect(site_url().'/sent');
                 }else {
                     $this->session->set_flashdata('msg','Something went wrong.');
                     redirect(site_url().'/');
                 }
+            }
+        }
+    }
+
+    public function verify() {
+        if (isset($_POST['verifying'])) {
+            $get = $this->users->Verifying($_POST['email']);
+            if ($get && $get['status'] == 'INACTIVE') {
+                $random = substr(str_shuffle(str_repeat("0123456789", 6)), 0, 6);
+                $code = sha1($random);
+                $new = $this->users->NewCode($get['email'] , $code);
+                if($new) {
+                    $this->email->sender('auto_mailing@gmail.com', 'Sample Mailer');
+                    $this->email->recipient($get['email']);
+                    $this->email->subject('Verification Code');
+                    $this->email->email_content($random);
+                    $test = $this->email->send();
+                    if($test) {
+                        $user = [
+                            'email' => $get['email'],
+                            'status' => $get['status'],
+                        ];
+                        $this->session->set_userdata($user);
+                        redirect(site_url()."/sent");
+                    } else {
+                        $this->session->set_flashdata('msg', 'Something went wrong, Please try again later.');
+                        redirect(site_url()."/");
+                    }
+                } else {
+                    $this->session->set_flashdata('msg', 'Something went wrong, Please try again later.');
+                    redirect(site_url()."/");
+                }
+            } else if($get['status'] == 'ACTIVE') {
+                $this->session->set_flashdata('msg', 'You are already verified.');
+                redirect(site_url()."/");
+            } else {
+                $this->session->set_flashdata('msg', 'User didn\'t exists.');
+                redirect(site_url()."/sent");
+            }
+
+        } else if(isset($_POST['resend'])) {
+            if(isset($_SESSION['email'])) {
+                $random = substr(str_shuffle(str_repeat("0123456789", 6)), 0, 6);
+                $code = sha1($random);
+                $new = $this->users->NewCode($_SESSION['email'], $code);
+                if($new) {
+                    $this->email->sender('auto_mailing@gmail.com', 'Sample Mailer');
+                    $this->email->recipient($_SESSION['email']);
+                    $this->email->subject('Verification Code');
+                    $this->email->email_content($random);
+                    $test = $this->email->send();
+                    if($test) {
+                        $this->session->set_flashdata('msg', 'A new code has been sent to your email.');
+                        redirect(site_url()."/sent");
+                    } else {
+                        $this->session->set_flashdata('msg', 'Something went wrong, Please try again later.');
+                        redirect(site_url()."/");
+                    }
+                } else {
+                    $this->session->set_flashdata('msg', 'Something went wrong, Please try again later.');
+                    redirect(site_url()."/sent");
+                }
+            } else {
+                $this->session->set_flashdata('msg', 'Please input your email.');
+                redirect(site_url()."/sent");
+            }
+        } else {
+            if(isset($_SESSION['email'])) {
+                $get = $this->users->Verifying($_SESSION['email']); 
+                if(sha1($_POST['code']) == $get['code']) {
+                    $verified = $this->users->Verified($_SESSION['email']);
+                    if($verified) {
+                        $this->session->set_flashdata('msg', 'Verified successfully. You are now eligible for login.');
+                        redirect(site_url()."/");
+                    } else {
+                        $this->session->set_flashdata('msg', 'Couldn\'t be verified at this moment, Please try again later.');
+                        redirect(site_url()."/sent");
+                    }
+                } else {
+                    $this->session->set_flashdata('msg', 'Wrong verification code.');
+                    redirect(site_url()."/sent");
+                }
+            } else {
+                $this->session->set_flashdata('msg', 'Please input your email.');
+                redirect(site_url()."/sent");
             }
         }
     }

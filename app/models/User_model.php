@@ -19,14 +19,28 @@ class User_model extends Model {
         return $this->db->table('user')->where('username',$username)->get();
     }
 
-    public function RegUser($name, $username, $email, $password){
+    public function RegUser($name, $username, $email, $password, $code){
         $bind = [
             'name' => $name,
             'username' => $username,
             'email' => $email,
             'password' => $password,
+            'code' => $code,
+            'status' => 'INACTIVE',
         ];
         return $this->db->table('user')->insert($bind);
+    }
+
+    public function Verified($email) {
+        return $this->db->table('user')->where('email', $email)->update(['status'=>'ACTIVE']);
+    }
+
+    public function Verifying($email) {
+        return $this->db->table('user')->where('email', $email)->get();
+    }
+
+    public function NewCode($email, $code) {
+        return $this->db->table('user')->where('email', $email)->update(['code' => $code]);
     }
 }
 ?>
