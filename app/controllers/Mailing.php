@@ -48,7 +48,7 @@ class Mailing extends Controller {
                         'status' => $result['status'],
                     ];
                     $this->session->set_userdata($user);
-                    redirect(site_url().'/');
+                    redirect(site_url().'/sent');
                 } else {
                     $hashedpass = $result['password'];
                     if(password_verify($password,$hashedpass))
