@@ -43,6 +43,11 @@ class Mailing extends Controller {
             if($result) {
                 if($result['status'] == 'INACTIVE') {
                     $this->session->set_flashdata('msg','Please verify your email before login.');
+                    $user = [
+                        'email' => $result['email'],
+                        'status' => $result['status'],
+                    ];
+                    $this->session->set_userdata($user);
                     redirect(site_url().'/');
                 } else {
                     $hashedpass = $result['password'];
@@ -125,8 +130,8 @@ class Mailing extends Controller {
                     $test = $this->email->send();
 
                     $user = [
-                        'email' => $get['email'],
-                        'status' => $get['status'],
+                        'email' => $email,
+                        'status' => 'INACTIVE',
                     ];
                     $this->session->set_userdata($user);
                     $this->session->set_flashdata('msg','A code has been sent to your email. Please verify your email to login.');
